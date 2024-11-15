@@ -1,0 +1,42 @@
+fun (check the color){
+	if IR[0] & IR[9] == black 
+		white line following
+
+	if IR[0] & IR[9] == white
+		black line following 
+
+
+
+func (calibration) 
+
+
+loop{
+
+function with switches ->
+
+		1.)calibration 
+			Rotate , find max and min. find the mean
+
+		2.)normal speed
+
+			
+
+		3.)fast speed
+
+
+
+
+
+}
+
+
+##########
+
+need to do -> 
+	basic line following with PID
+	90 junctions 
+	45> junctions
+	white line in black background, black lines in white
+	circules 
+
+	
