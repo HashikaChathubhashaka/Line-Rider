@@ -14,5 +14,6 @@ extern Adafruit_SSD1306 display;
 
 // Declare the displayText function
 void displayText(const String &text);
+void displayWhiteBlack();
 
 #endif

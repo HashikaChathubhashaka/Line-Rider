@@ -2,16 +2,18 @@
 #define MOTORS_H
 
 //left ->  A
-const int motorA_pin1 = 4;  
-const int motorA_pin2 = 16;
+const int motorA_pin1 = 16;  
+const int motorA_pin2 = 4;
 
 //right -> B
 const int motorB_pin1 = 18;
 const int motorB_pin2 = 17;
 
-// const int speed = 170;  // Speed value for motor control
-
 // Function Declaration for moveForward
-void moveForward();
-
+void moveForward(int speed);
+void moveBackward(int speed);
+void turnLeft(int speed);
+void turnRight(int speed);
+void setMotorSpeeds(int leftSpeed, int rightSpeed);
+void stopMotors();
 #endif // MOTORS_H

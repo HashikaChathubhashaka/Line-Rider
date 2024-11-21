@@ -1,5 +1,5 @@
 // left to right 
-int irPins[10] = {14, 27, 26, 25, 33, 32, 35, 34, 39, 36}; 
+int irPins[10] = {39, 14, 27, 26, 25, 33, 32, 35, 34, 36}; 
 int irValues[10];
 
 void setup() {
