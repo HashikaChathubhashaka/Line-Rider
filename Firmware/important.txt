@@ -1,0 +1,5 @@
+Encoder pulse per revolution = 28
+
+so one rotation of output shaft = Encoder pulse per revolution X Gear Ratio
+
+So pulse per one rotation = 28 X 100

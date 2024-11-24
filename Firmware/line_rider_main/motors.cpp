@@ -44,3 +44,13 @@ void stopMotors() {
     analogWrite(motorB_pin1, 0);
     analogWrite(motorB_pin2, 0);
 }
+
+
+void testmotors() {
+
+    analogWrite(motorA_pin1, 100);
+    analogWrite(motorA_pin2, 0);
+    analogWrite(motorB_pin1, 100);
+    analogWrite(motorB_pin2, 0);
+
+}

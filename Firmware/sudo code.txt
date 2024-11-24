@@ -40,3 +40,42 @@ need to do ->
 	circules 
 
 	
+main loop[]
+
+
+read IR
+
+
+
+
+unsigned long gapStartTime = 0;
+
+if (leftSensor == WHITE && centerSensor == WHITE && rightSensor == WHITE) {
+    if (gapStartTime == 0) {
+        gapStartTime = millis(); // Start timing the gap
+    } else if (millis() - gapStartTime > 500) { // 500ms tolerance for gaps
+        // Detected a dead end
+        displayText("Dead End Detected");
+        stopMotors();
+        handleDeadEnd();
+    }
+} else {
+    gapStartTime = 0; // Reset gap timer when line is detected
+    lineFollowingPID(); // Continue following the line
+}
+
+
+
+#right pioraty 
+
+cross line 
+
+T juction 
+
+L junction - left , right
+
+
+
+Actue Angler 
+
+

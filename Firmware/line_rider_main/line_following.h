@@ -5,8 +5,6 @@
 
 
 
-void readIRValues();
-int calculatePosition();
-void lineFollowPID();
+void line_following_pid_forward();
 
 #endif // LINEFOLLOWING_H

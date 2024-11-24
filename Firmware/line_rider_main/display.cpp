@@ -23,9 +23,9 @@ void displayWhiteBlack() {
 
     for (int i = 0; i < 10; ++i) {
         if (irValues[i] > thresholdsIR[i]) {
-            display.print("W "); // White
+            display.print("B "); // black
         } else {
-            display.print("B "); // Black
+            display.print("W "); // white
         }
     }
 

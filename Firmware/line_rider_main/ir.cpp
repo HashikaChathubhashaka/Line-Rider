@@ -50,7 +50,7 @@ void autoCalibrateIR() {
     }
 
     // Rotate the robot left and right
-    for (int t = 0; t < 300; t++) { // Run for 200 cycles (~adjust as needed)
+    for (int t = 0; t < 800; t++) { // Run for 200 cycles (~adjust as needed)
         readIRValues();
         for (int i = 0; i < 10; i++) {
             int sensorValue = irValues[i];
@@ -58,12 +58,12 @@ void autoCalibrateIR() {
             if (sensorValue > maxValues[i]) maxValues[i] = sensorValue;
         }
 
-        // Move robot left and right alternately
-        if (t < 100) {
-            turnLeft(80); // Rotate left at speed 80
-        } else {
-            turnRight(80); // Rotate right at speed 80
-        }
+        // // Move robot left and right alternately
+        // if (t < 100) {
+        //     turnLeft(80); // Rotate left at speed 80
+        // } else {
+        //     turnRight(80); // Rotate right at speed 80
+        // }
         delay(10); // Delay for smooth movement and reading
     }
 
