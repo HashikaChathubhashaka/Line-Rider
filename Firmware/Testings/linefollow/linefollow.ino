@@ -13,10 +13,15 @@ const int threshold = 200; // IR threshold
 const int thresholdRight = 200; 
 const int thresholdLeft = 200;
 
-// PID constants
-const float kp = 25.0; // Proportional gain
+// // B" PID constants
+// const float kp = 25.0; // Proportional gain
+// const float ki = 0.0; // Integral gain
+// const float kd = 2.0; // Derivative gain
+
+// W" PID constants
+const float kp = 10.0; // Proportional gain
 const float ki = 0.0; // Integral gain
-const float kd = 2.0; // Derivative gain
+const float kd = 1.0; // Derivative gain
 
 // PID variables
 float integral = 0.0;
@@ -31,7 +36,7 @@ int irValues[10];
 
 
 
-char color = 'B';
+char color = 'W';
 
 void toggleColor(char &color) {
   if (color == 'B') {
@@ -42,6 +47,7 @@ void toggleColor(char &color) {
 }
 
 void line_following_pid_forward(char lineColor) {
+    readIRValues();
     // Read sensor values
     // int sensorValues[8];
     // for (int i = 0; i < 8; i++) {
@@ -54,7 +60,7 @@ void line_following_pid_forward(char lineColor) {
     for (int i = 0; i < 8; i++) {
         if ((lineColor == 'W' && irValues[i+1] < threshold) || 
             (lineColor == 'B' && irValues[i+1] > threshold)) {
-            error += (i - 3.5); // Center of sensor array is 3.275
+            error += (i - 3.275); // Center of sensor array is 3.275
         }
     }
 
@@ -198,13 +204,15 @@ void left_rotation(){
   turnLeft(120);
   delay(200);
   stopMotors();
+  delay(5);
 
   do{
-    turnLeft(90);
+    turnLeft(120);
     readIRValues();
+    delay(5);
 
   }
-  while(mid_IR_left(color)==false && mid_IR_right(color)==false);
+  while(mid_IR_leftx()==false && mid_IR_rightx()==false);
   stopMotors();
 
 
@@ -212,14 +220,18 @@ void left_rotation(){
 
 
 void dead_end_rotation(){
-
+  turnLeft(120);
+  delay(200);
+  stopMotors();
+  delay(5);
 
   do{
-    turnLeft(70);
+    turnLeft(100);
     readIRValues();
+    delay(5);
 
   }
-  while(mid_IR_left(color)==false && mid_IR_right(color)==false);
+  while(mid_IR_leftx()==false && mid_IR_rightx()==false);
   stopMotors();
 
 
@@ -242,6 +254,20 @@ bool mid_IR_right(char lineColor) {
     return true;
   }
   return false;
+}
+
+bool mid_IR_rightx() {
+  if (irValues[4] > threshold) {
+    return true;
+  }
+    return false;
+}
+
+bool mid_IR_leftx() {
+  if (irValues[3] > threshold) {
+    return true;
+  }
+    return false;
 }
 
 bool mid_IR_left(char lineColor) {
@@ -272,12 +298,12 @@ bool rightJunction(char lineColor) {
 bool leftJunction(char lineColor) {
   if (lineColor == 'B') {
     // For black line: compare if IR values are greater than the threshold
-    if (irValues[0] > thresholdLeft && (irValues[5] > threshold || irValues[4] > threshold)) {
+    if (irValues[1] > thresholdLeft && (irValues[5] > threshold || irValues[4] > threshold)) {
       return true;
     }
   } else if (lineColor == 'W') {
     // For white line: compare if IR values are less than the threshold
-    if (irValues[0] < thresholdLeft && (irValues[5] < threshold || irValues[4] < threshold)) {
+    if (irValues[1] < thresholdLeft && (irValues[5] < threshold || irValues[4] < threshold)) {
       return true;
     }
   }
@@ -378,7 +404,7 @@ void loop() {
         handleLineFollowing();
     }
 
-    delay(10); // Small delay for stability
+    delay(30); // Small delay for stability
 }
 
 void handleRightJunction() {
