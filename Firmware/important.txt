@@ -3,3 +3,26 @@ Encoder pulse per revolution = 28
 so one rotation of output shaft = Encoder pulse per revolution X Gear Ratio
 
 So pulse per one rotation = 28 X 100
+
+
+
+
+
+
+
+        if (at_junction()):
+            if (right_path_available()):   # Check the right path first
+                take_right_turn()
+            else if (straight_path_available()): # If right is blocked, go straight
+                move_straight()
+            else if (left_path_available()):  # If straight is blocked, go left
+                take_left_turn()
+            else:  # Dead-end detected
+                handle_dead_end()
+        else:
+            follow_line()  # Continue normal line-following behavior
+
+
+
+
+

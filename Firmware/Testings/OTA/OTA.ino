@@ -2,7 +2,9 @@
 #include <ArduinoOTA.h>
 
 const char* ssid = "Bytes";  // Your Wi-Fi SSID
-const char* password = "Hashika2000";  // Your Wi-Fi password
+const char* password = "hashika2000";  // Your Wi-Fi password
+
+const int ledPin = 2;
 
 void setup() {
   Serial.begin(115200);
@@ -14,17 +16,22 @@ void setup() {
     Serial.print(".");
   }
   Serial.println("Connected to Wi-Fi");
+  
+  pinMode(ledPin, OUTPUT);
 
   // Start OTA
+  ArduinoOTA.setPassword("myOTAPassword");
   ArduinoOTA.begin();  
 }
 
 void loop() {
   ArduinoOTA.handle();  // Handle OTA requests
   
-  // Blink the LED as an example (initial state)
-  digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED on
-  delay(1000);                      // Wait for 1 second
-  digitalWrite(LED_BUILTIN, LOW);   // Turn the LED off
-  delay(1000);                      // Wait for 1 second
+
+  digitalWrite(ledPin, HIGH); // Turn the LED on
+  delay(200);                // Wait for 1 second (1000 ms)
+  digitalWrite(ledPin, LOW);  // Turn the LED off
+  delay(200);                // Wait for 1 second
+
+
 }

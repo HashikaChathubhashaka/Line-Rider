@@ -24,6 +24,21 @@ void turnLeft(int speed) {
     analogWrite(motorB_pin2, 0);
 }
 
+void turnLeftOneWheel(int speed) {
+    analogWrite(motorA_pin1, 0);
+    analogWrite(motorA_pin2, 0);
+    analogWrite(motorB_pin1, speed);
+    analogWrite(motorB_pin2, 0);
+}
+
+void turnRightOneWheel(int speed) {
+    analogWrite(motorA_pin1, speed);
+    analogWrite(motorA_pin2, 0);
+    analogWrite(motorB_pin1, 0);
+    analogWrite(motorB_pin2, 0);
+}
+
+
 void turnRight(int speed) {
     analogWrite(motorA_pin1, speed);
     analogWrite(motorA_pin2, 0);
@@ -54,3 +69,5 @@ void testmotors() {
     analogWrite(motorB_pin2, 0);
 
 }
+
+

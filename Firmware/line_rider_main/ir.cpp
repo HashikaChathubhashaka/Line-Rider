@@ -50,7 +50,7 @@ void autoCalibrateIR() {
     }
 
     // Rotate the robot left and right
-    for (int t = 0; t < 800; t++) { // Run for 200 cycles (~adjust as needed)
+    for (int t = 0; t < 1500; t++) { // Run for 200 cycles (~adjust as needed)
         readIRValues();
         for (int i = 0; i < 10; i++) {
             int sensorValue = irValues[i];
@@ -59,11 +59,11 @@ void autoCalibrateIR() {
         }
 
         // // Move robot left and right alternately
-        // if (t < 100) {
-        //     turnLeft(80); // Rotate left at speed 80
-        // } else {
-        //     turnRight(80); // Rotate right at speed 80
-        // }
+        if (t < 1000) {
+            turnLeft(130); // Rotate left at speed 80
+        } else {
+            turnRight(130); // Rotate right at speed 80
+        }
         delay(10); // Delay for smooth movement and reading
     }
 
@@ -76,3 +76,71 @@ void autoCalibrateIR() {
 }
 
 
+
+// Detections
+
+bool right_junction(char lineColor) {
+    if (lineColor == 'B') { // Black lines
+        if (irValues[5] > thresholdsIR[5] && irValues[8] > thresholdsIR[8]) {
+            return true;
+        }
+    } else if (lineColor == 'W') { // White lines
+        if (irValues[5] < thresholdsIR[5] && irValues[8] < thresholdsIR[8]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool left_junction(char lineColor) {
+    if (lineColor == 'B') { // Black lines
+        if (irValues[1] > thresholdsIR[1] && irValues[4] > thresholdsIR[4]) {
+            return true;
+        }
+    } else if (lineColor == 'W') { // White lines
+        if (irValues[1] < thresholdsIR[1] && irValues[4] < thresholdsIR[4]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool mid_IR(char lineColor) {
+    if (lineColor == 'B') { // Black lines
+        if (irValues[5] > thresholdsIR[5]) {
+            return true;
+        }
+    } else if (lineColor == 'W') { // White lines
+        if (irValues[5] < thresholdsIR[5] && irValues[5] < thresholdsIR[5]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool dead_end_or_dotted(char lineColor) {
+    if (lineColor == 'B') { // White lines - black dead end
+        if (irValues[1] < thresholdsIR[1] && irValues[8] < thresholdsIR[8]) {
+            return true;
+        }
+    } else if (lineColor == 'W') { // Black lines - white dead end
+        if (irValues[1] > thresholdsIR[1] && irValues[8] > thresholdsIR[8]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+bool all_oposite_color(char lineColor) {
+    if (lineColor == 'B') { // Black lines
+        if (irValues[1] < thresholdsIR[1] && irValues[2] < thresholdsIR[2] && irValues[3] < thresholdsIR[3] && irValues[4] < thresholdsIR[4] && irValues[5] < thresholdsIR[5] && irValues[6] < thresholdsIR[6] && irValues[7] < thresholdsIR[7]) {
+            return true;
+        }
+    } else if (lineColor == 'W') { // White lines
+        if (irValues[1] > thresholdsIR[1] && irValues[2] > thresholdsIR[2] && irValues[3] > thresholdsIR[3] && irValues[4] > thresholdsIR[4] && irValues[5] > thresholdsIR[5] && irValues[6] > thresholdsIR[6] && irValues[7] > thresholdsIR[7]) {
+            return true;
+        }
+    }
+    return false;
+}

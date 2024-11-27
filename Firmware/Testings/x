@@ -1,0 +1,61 @@
+//#region Mainloop
+            while (true) {
+
+                if (section==0){ 
+
+                  readIRValues();
+
+                  if (right_junction(line_color) || left_junction(line_color)){
+
+                    if (right_junction(line_color)){
+                        stopMotors();
+                        displayText("RjunB");
+                        delay(300);
+                        display.clearDisplay();
+                        rotate_to_line('R', 100, 500);
+                        // section=1; //rotating right
+                    }
+
+                    else if (left_junction(line_color))
+                    {
+                      stopMotors();
+                      displayText("L junc");
+                      delay(2000);
+                      //* go forward some distance to find line
+
+                    }
+
+                }
+                  else{
+                    line_following_pid_forward();
+                  }
+
+                }
+
+                else if(section==1){
+
+                  //*stop motors
+                  //* go forward some distance
+                  //* rotate right
+                  rotate_to_line('R', 100, 500);
+                  section=0;
+                }
+
+                else if(section==2){
+                  //* rotate left
+                  rotate_to_line('L', 100, 50);
+                  delay(2000);
+                  section=0;
+
+                }
+
+                else if(section==3){
+                  //* dead end
+                  //* rotate 180
+                  rotate_to_line('L', 100, 500);
+                  section=0;
+                } 
+
+            }
+
+// #pragma endregion

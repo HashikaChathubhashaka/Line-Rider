@@ -9,6 +9,13 @@ void readIRValues();
 void autoCalibrateIR();
 void loadThresholds();
 
+bool right_junction(char lineColor);
+bool left_junction(char lineColor);
+bool mid_IR(char lineColor);    
+bool dead_end_or_dotted(char lineColor);
+bool all_oposite_color(char lineColor);
+
+
 
 
 #endif // IR_H

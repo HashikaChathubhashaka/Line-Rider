@@ -17,4 +17,6 @@ void turnRight(int speed);
 void setMotorSpeeds(int leftSpeed, int rightSpeed);
 void stopMotors();
 void testmotors();
+void turnRightOneWheel(int speed);
+void turnLeftOneWheel(int speed);
 #endif // MOTORS_H
