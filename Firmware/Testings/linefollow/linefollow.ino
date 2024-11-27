@@ -230,7 +230,7 @@ bool mid_IR_left() {
 
 bool rightJunction() {
 
-  if (irValues[9] > thresholdRight  && (irValues[3] > threshold || irValues[4] > threshold)) {
+  if ((irValues[9] > thresholdRight || irValues[8] > thresholdRight)  && (irValues[3] > threshold || irValues[4] > threshold)) {
     return true;
   }
     return false;
@@ -260,6 +260,14 @@ bool opposite_line(){
   }
     return false;
   }
+
+bool Black_OR(){
+
+if (irValues[0] > threshold || irValues[1] > threshold && irValues[2] > threshold || irValues[3] > threshold || irValues[4] > threshold || irValues[5] > threshold || irValues[6] > threshold || irValues[7] > threshold) {
+  return true;
+}
+  return false;
+}
 
 
 void loop() {
@@ -305,19 +313,37 @@ void handleLeftJunction() {
 void handleDeadJunction(){
         stopMotors();
         // delay(20);
-        runForDurationPID(150);
+        runForDurationPID(50);
         stopMotors();
         delay(20);
         readIRValues();
 
-        if (opposite_line()) {
+        if (Black_OR()){
+          handleLineFollowing();
+        }else{
+          runForDurationPID(50);
+          stopMotors();
+          delay(20);
+          readIRValues();
+
+          if (Black_OR()){
+              handleLineFollowing();
+          } else{
             stopMotors();
             delay(1000);  
             // Rotate 180 degrees
             left_rotation();
-        }else {
-        handleLineFollowing();
+          }
         }
+
+        // if (opposite_line()) {
+        //     stopMotors();
+        //     delay(1000);  
+        //     // Rotate 180 degrees
+        //     left_rotation();
+        // }else {
+        // handleLineFollowing();
+        // }
 
 }
 
