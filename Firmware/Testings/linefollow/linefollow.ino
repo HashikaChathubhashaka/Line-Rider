@@ -1,13 +1,13 @@
 #include <Arduino.h>
 #include <Wire.h>
-#include <SPI.h>
 
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 32 // OLED display height, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+
 
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
@@ -206,11 +206,14 @@ void setup() {
         pinMode(irPins[i], INPUT);
     }
 
+      display.clearDisplay();     // Clear the display
 
 
-      // delay(100);
-      // displayText("Welcome");
-      // delay(2000);
+
+      delay(100);
+      displayText("Welcome");
+      delay(2000);
+      display.clearDisplay();
       
 }
 
@@ -464,11 +467,18 @@ bool leftJunction(char lineColor) {
 bool t_junction(char lineColor) {
   if (lineColor == 'B') {
     // For black line: IR values should be greater than the threshold
+    // if ((irValues[0] > threshold || irValues[1] > threshold) &&
+    //     (irValues[9] > threshold || irValues[8] > threshold) &&
+    //     (irValues[5] > threshold || irValues[4] > threshold)) {
+    //   return true;
+    // }
+
     if ((irValues[0] > threshold || irValues[1] > threshold) &&
-        (irValues[9] > threshold || irValues[8] > threshold) &&
+        (irValues[9] > threshold || irValues[8] > threshold ) &&
         (irValues[5] > threshold || irValues[4] > threshold)) {
       return true;
     }
+
   } else if (lineColor == 'W') {
     // For white line: IR values should be less than the threshold
     if ((irValues[0] < thresholdLeft || irValues[1] < threshold) &&
@@ -485,7 +495,7 @@ bool opposite_line(char lineColor) {
   if (lineColor == 'B') {
     if (irValues[0] < threshold && irValues[1] < threshold && irValues[2] < threshold && 
         irValues[3] < threshold && irValues[4] < threshold && irValues[5] < threshold && 
-        irValues[6] < threshold && irValues[7] < threshold) {
+        irValues[6] < threshold && irValues[7] < threshold   && irValues[8] < threshold && irValues[9] < threshold  ) {
       return true;
     }
   } else if (lineColor == 'W') {
@@ -503,7 +513,7 @@ bool Black_OR(char lineColor) {
     // For black line: IR values should be greater than the threshold
     if (irValues[0] > threshold || irValues[1] > threshold || irValues[2] > threshold || 
         irValues[3] > threshold || irValues[4] > threshold || irValues[5] > threshold || 
-        irValues[6] > threshold || irValues[7] > threshold) {
+        irValues[6] > threshold || irValues[7] > threshold || irValues[8] > threshold || irValues[9] > threshold ) {
       return true;
     }
   } else if (lineColor == 'W') {
@@ -535,21 +545,34 @@ bool color_changer(char lineColor) {
   return false;
 }
 
+
+
+
+
+
+
 void loop() {
 
-        displayText("We");
-    // line_following_pid_forward(color);
+    //     displayText("We");
+    // // line_following_pid_forward(color);
 
     readIRValues(); // Read all IR sensors
     if (t_junction(color)){
+        displayText("T J");
         handleRightJunction();
-    } else if (rightJunction(color)) {
+    } 
+    else if (rightJunction(color)) {
+        displayText("Right J");
         handleRightJunction();
     } else if (leftJunction(color)) {
+        displayText("Left J");
         handleLeftJunction();
+
     } else if (opposite_line(color)){
+        displayText("Opposite");
         handleDeadJunction();
     } else if (color_changer(color)){
+        displayText("Color change");
         toggleColor(color);
         stopMotors();
         delay(2000);
@@ -557,7 +580,7 @@ void loop() {
         handleLineFollowing();
     }
 
-    // delay(1); // Small delay for stability //30
+    // delay(10); // Small delay for stability //30
 }
 
 void handleRightJunction() {
@@ -589,7 +612,7 @@ void handleDeadJunction(){
         // delay(20);
         runForDurationPID(40);
         stopMotors();
-        delay(20);
+        // delay(20);
         readIRValues();
 
         if (Black_OR(color)){
