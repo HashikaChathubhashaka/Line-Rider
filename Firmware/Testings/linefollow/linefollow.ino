@@ -22,20 +22,20 @@ const int motorB_pin2 = 17; // Motor B backward
 const int irPins[10] = {39,14,27, 26, 25, 33, 32, 35, 34,36};
 const int irArrayPins[8] = {14,27, 26, 25, 33, 32, 35, 34};
 
-const int threshold = 200; // IR threshold  for "B"
-// const int threshold = 300; // IR threshold for "w"
-const int thresholdRight = 300; 
-const int thresholdLeft = 300;
+// const int threshold = 200; // IR threshold  for "B"
+const int threshold = 300; // IR threshold for "w"
+const int thresholdRight = 200; 
+const int thresholdLeft = 200;
 
 // // B" PID constants
-const float kp = 25.0; // Proportional gain
-const float ki = 0.0; // Integral gain
-const float kd = 2.0; // Derivative gain
+// const float kp = 25.0; // Proportional gain
+// const float ki = 0.0; // Integral gain
+// const float kd = 2.0; // Derivative gain
 
 // W" PID constants
-// const float kp = 8.0; // Proportional gain
-// const float ki = 0.0; // Integral gain
-// const float kd = 0.5; // Derivative gain
+const float kp = 8.0; // Proportional gain
+const float ki = 0.0; // Integral gain
+const float kd = 0.5; // Derivative gain
 
 // PID variables
 float integral = 0.0;
@@ -50,7 +50,7 @@ const int minSpeed = 30;     // Minimum speed 30
 int irValues[10];
 
 
-char color = 'B';
+char color = 'W';
 
 void toggleColor(char &color) {
   if (color == 'B') {
@@ -74,111 +74,111 @@ void displayText(const String &text) {
 }
 
 
-// void line_following_pid_forward(char lineColor) {
-//     readIRValues();  // Function to read IR sensor values into irValues array
-
-//     // Define weights for each sensor, assuming 7 sensors are used
-//     int weights[10] = {8,6, 4, 2, 0.5, -0.5, -2, -4, -6,-8};  // Adjust as needed
-
-//     // Calculate the error value using weighted sensor readings
-//     float error = 0.0;
-//     // int activeSensors = 0;  // Track the number of sensors detecting the line
-
-//     for (int i = 0; i < 10; i++) {
-//         bool onLine = (lineColor == 'W' && irValues[i] > threshold) || 
-//                       (lineColor == 'B' && irValues[i] > threshold);
-
-//         if (onLine) {
-//             error += weights[i];  // Accumulate error using sensor weights
-//             // activeSensors++;
-//         }
-//     }
-
-//     // // Normalize the error by the number of active sensors if any detected
-//     // if (activeSensors > 0) {
-//     //     error /= activeSensors;
-//     // }
-
-//     // PID Control Calculation
-//     float output = kp * error;                // Proportional term
-//     integral += error;                        // Integral term
-//     integral = constrain(integral, -1000, 1000);  // Integral wind-up protection
-//     output += ki * integral;                  
-//     output += kd * (error - lastError);       // Derivative term
-//     lastError = error;
-
-//     // Calculate motor speeds based on PID output
-//     int leftMotorSpeed = motorSpeed + output;
-//     int rightMotorSpeed = motorSpeed - output;
-
-//     // Constrain motor speeds to the valid range
-//     leftMotorSpeed = constrain(leftMotorSpeed, minSpeed, maxSpeed);
-//     rightMotorSpeed = constrain(rightMotorSpeed, minSpeed, maxSpeed);
-
-//     // Debugging output
-//     // Serial.print("Error: ");
-//     // Serial.print(error);
-//     // Serial.print(", Output: ");
-//     // Serial.print(output);
-//     // Serial.print(", Left Speed: ");
-//     // Serial.print(leftMotorSpeed);
-//     // Serial.print(", Right Speed: ");
-//     // Serial.println(rightMotorSpeed);
-
-//     // Set motor speeds
-//     analogWrite(motorA_pin1, leftMotorSpeed);  // Left motor forward
-//     analogWrite(motorA_pin2, 0);               // Left motor backward off
-//     analogWrite(motorB_pin1, rightMotorSpeed); // Right motor forward
-//     analogWrite(motorB_pin2, 0);               // Right motor backward off
-// }
-
-
 void line_following_pid_forward(char lineColor) {
-    readIRValues();
-    // Read sensor values
+    readIRValues();  // Function to read IR sensor values into irValues array
 
+    // Define weights for each sensor, assuming 7 sensors are used
+    int weights[10] = {7 ,5 , 4, 2.5, 0.5, -0.5, -2.5, -4, -5 ,-7};  // Adjust as needed
 
-    // Calculate error value
+    // Calculate the error value using weighted sensor readings
     float error = 0.0;
+    // int activeSensors = 0;  // Track the number of sensors detecting the line
 
-    for (int i = 0; i < 8; i++) {
-        if ((lineColor == 'W' && irValues[i+1] < threshold) || 
-            (lineColor == 'B' && irValues[i+1] > threshold)) {
-            error += (i - 3.275); // Center of sensor array is 3.275
+    for (int i = 0; i < 10; i++) {
+        bool onLine = (lineColor == 'W' && irValues[i] > threshold) || 
+                      (lineColor == 'B' && irValues[i] > threshold);
+
+        if (onLine) {
+            error += weights[i];  // Accumulate error using sensor weights
+            // activeSensors++;
         }
     }
 
-    // PID control
-    float output = kp * error;               // Proportional term
-    integral += error;                       // Integral term
-    output += ki * integral;                 // Integral term
-    output += kd * (error - lastError);      // Derivative term
+    // // Normalize the error by the number of active sensors if any detected
+    // if (activeSensors > 0) {
+    //     error /= activeSensors;
+    // }
+
+    // PID Control Calculation
+    float output = kp * error;                // Proportional term
+    integral += error;                        // Integral term
+    integral = constrain(integral, -1000, 1000);  // Integral wind-up protection
+    output += ki * integral;                  
+    output += kd * (error - lastError);       // Derivative term
     lastError = error;
 
-    // Adjust motor speeds based on PID output
+    // Calculate motor speeds based on PID output
     int leftMotorSpeed = motorSpeed + output;
     int rightMotorSpeed = motorSpeed - output;
 
-    // Ensure motor speeds are within valid range
+    // Constrain motor speeds to the valid range
     leftMotorSpeed = constrain(leftMotorSpeed, minSpeed, maxSpeed);
     rightMotorSpeed = constrain(rightMotorSpeed, minSpeed, maxSpeed);
 
-    // Debugging outputs
-    Serial.print("Error: ");
-    Serial.print(error);
-    Serial.print(", Output: ");
-    Serial.print(output);
-    Serial.print(", Left Speed: ");
-    Serial.print(leftMotorSpeed);
-    Serial.print(", Right Speed: ");
-    Serial.println(rightMotorSpeed);
+    // Debugging output
+    // Serial.print("Error: ");
+    // Serial.print(error);
+    // Serial.print(", Output: ");
+    // Serial.print(output);
+    // Serial.print(", Left Speed: ");
+    // Serial.print(leftMotorSpeed);
+    // Serial.print(", Right Speed: ");
+    // Serial.println(rightMotorSpeed);
 
     // Set motor speeds
-    analogWrite(motorA_pin1, leftMotorSpeed); // Left motor forward
-    analogWrite(motorA_pin2, 0);             // Left motor backward disabled
+    analogWrite(motorA_pin1, leftMotorSpeed);  // Left motor forward
+    analogWrite(motorA_pin2, 0);               // Left motor backward off
     analogWrite(motorB_pin1, rightMotorSpeed); // Right motor forward
-    analogWrite(motorB_pin2, 0);             // Right motor backward disabled
+    analogWrite(motorB_pin2, 0);               // Right motor backward off
 }
+
+
+// void line_following_pid_forward(char lineColor) {
+//     readIRValues();
+//     // Read sensor values
+
+
+//     // Calculate error value
+//     float error = 0.0;
+
+//     for (int i = 0; i < 8; i++) {
+//         if ((lineColor == 'W' && irValues[i+1] < threshold) || 
+//             (lineColor == 'B' && irValues[i+1] > threshold)) {
+//             error += (i - 3.275); // Center of sensor array is 3.275
+//         }
+//     }
+
+//     // PID control
+//     float output = kp * error;               // Proportional term
+//     integral += error;                       // Integral term
+//     output += ki * integral;                 // Integral term
+//     output += kd * (error - lastError);      // Derivative term
+//     lastError = error;
+
+//     // Adjust motor speeds based on PID output
+//     int leftMotorSpeed = motorSpeed + output;
+//     int rightMotorSpeed = motorSpeed - output;
+
+//     // Ensure motor speeds are within valid range
+//     leftMotorSpeed = constrain(leftMotorSpeed, minSpeed, maxSpeed);
+//     rightMotorSpeed = constrain(rightMotorSpeed, minSpeed, maxSpeed);
+
+//     // Debugging outputs
+//     Serial.print("Error: ");
+//     Serial.print(error);
+//     Serial.print(", Output: ");
+//     Serial.print(output);
+//     Serial.print(", Left Speed: ");
+//     Serial.print(leftMotorSpeed);
+//     Serial.print(", Right Speed: ");
+//     Serial.println(rightMotorSpeed);
+
+//     // Set motor speeds
+//     analogWrite(motorA_pin1, leftMotorSpeed); // Left motor forward
+//     analogWrite(motorA_pin2, 0);             // Left motor backward disabled
+//     analogWrite(motorB_pin1, rightMotorSpeed); // Right motor forward
+//     analogWrite(motorB_pin2, 0);             // Right motor backward disabled
+// }
 
 void runForDurationPID(unsigned long duration) {
     unsigned long startTime = millis(); // Record the start time
@@ -266,12 +266,12 @@ void moveForward(int speed) {
 }
 
 // void right_rotation() {
-//   const unsigned long initialRotateTime = 500;  // Initial small rotation duration
+//   const unsigned long initialRotateTime = 200;  // Initial small rotation duration
 //   const unsigned long shortDelayTime = 10;      // Short delay between checks
 //   unsigned long startTime = millis();
 
 //   // Step 1: Perform initial small rotation
-//   turnRightOneWheel(120);  // Start turning
+//   turnRight(120);  // Start turning
 //   while (millis() - startTime < initialRotateTime) {
 //     // Wait for the initial rotation to complete (non-blocking)
 //   }
@@ -285,7 +285,7 @@ void moveForward(int speed) {
 
 //   // Step 3: Continue rotating until the middle IR detects the black line
 //   while (!mid_IR_right(color)) {
-//     turnRightOneWheel(100);  // Keep turning
+//     turnRight(100);  // Keep turning
 //     readIRValues();          // Continuously read IR sensor
 //     delay(5);                // Minimal delay for sensor stability
 //   }
@@ -297,17 +297,39 @@ void moveForward(int speed) {
 // }
 
 
-void right_rotation(){
+// void right_rotation(){
  
-  turnRightOneWheel(120); // 120
-  delay(500); 
+//   turnRightOneWheel(120); // 120
+//   delay(500); 
+//   stopMotors();
+//   delay(10);
+
+//   do{
+//     turnRightOneWheel(100); //120
+//     readIRValues();
+//     delay(5);
+//   }
+//   while(mid_IR_right(color)==false);
+//   stopMotors();
+//   delay(1000);
+
+
+// }
+
+
+void right_rotation(){          //two weel
+ 
+  turnRight(120);
+  delay(200);
+
   stopMotors();
-  delay(10);
+  delay(5);
 
   do{
-    turnRightOneWheel(100); //120
+    turnRight(100);
     readIRValues();
     delay(5);
+
   }
   while(mid_IR_right(color)==false);
   stopMotors();
@@ -318,12 +340,12 @@ void right_rotation(){
 
 
 // void left_rotation() {
-//   const unsigned long initialRotateTime = 200;  // Initial small rotation duration
+//   const unsigned long initialRotateTime = 500;  // Initial small rotation duration
 //   const unsigned long shortDelayTime = 10;      // Short delay between checks
 //   unsigned long startTime = millis();
 
 //   // Step 1: Perform initial small rotation
-//   turnLeft(100);  // Start turning
+//   turnLeftOneWheel(120);  // Start turning
 //   while (millis() - startTime < initialRotateTime) {
 //     // Wait for the initial rotation to complete (non-blocking)
 //   }
@@ -337,7 +359,7 @@ void right_rotation(){
 
 //   // Step 3: Continue rotating until the middle IR detects the black line
 //   while (!mid_IR_left(color)) {
-//     turnLeft(100);  // Keep turning
+//     turnLeftOneWheel(100);  // Keep turning
 //     readIRValues();         // Continuously read IR sensor
 //     delay(5);               // Minimal delay for sensor stability
 //   }
@@ -351,8 +373,32 @@ void right_rotation(){
 
 void left_rotation(){
 
+  turnLeftOneWheel(120); // 120
+  delay(350); 
+  stopMotors();
+  delay(1000);
+
+  do{
+    turnLeftOneWheel(120); //120
+    readIRValues();
+    delay(10);
+  }
+  while(mid_IR_left(color)==false);
+  // while(mid_IR_leftx()==false && mid_IR_rightx()==false);
+  stopMotors();
+  delay(1000);
+
+
+
+}
+
+bool previous_rotate_dir = true ; // 0 left
+
+void dead_end_rotation(bool dir){
+  if (dir){
   turnLeft(100);
   delay(200);
+
   stopMotors();
   delay(5);
 
@@ -362,11 +408,32 @@ void left_rotation(){
     delay(5);
 
   }
-  // while(mid_IR_left(color)==false);
-  while(mid_IR_leftx()==false && mid_IR_rightx()==false);
+  while(mid_IR_left(color)==false);
+  // while(mid_IR_leftx()==false && mid_IR_rightx()==false);
   stopMotors();
   delay(1000);
 
+  }
+
+  else{
+  turnRight(100);
+  delay(200);
+
+  stopMotors();
+  delay(5);
+
+  do{
+    turnRight(100);
+    readIRValues();
+    delay(5);
+
+  }
+  while(mid_IR_right(color)==false);
+  // while(mid_IR_leftx()==false && mid_IR_rightx()==false);
+  stopMotors();
+  delay(1000);
+
+  }
 
 }
 
@@ -409,7 +476,7 @@ bool mid_IR_rightx() {                //use for 'B' left rotate problem
 }
 
 bool mid_IR_leftx() {
-  if (irValues[3] > threshold) {
+  if (irValues[3] > threshold ) {
     return true;
   }
     return false;
@@ -417,7 +484,7 @@ bool mid_IR_leftx() {
 
 bool mid_IR_right(char lineColor) {
   if ((lineColor == 'B' && (irValues[5] > threshold || irValues[6] > threshold)) || 
-      (lineColor == 'W' && (irValues[4] < threshold || irValues[5] < threshold || irValues[6] < threshold ))) {
+      (lineColor == 'W' && (irValues[4] < threshold || irValues[5] < threshold || irValues[3] < threshold  ))) {
     return true;
   }
   return false;
@@ -426,7 +493,7 @@ bool mid_IR_right(char lineColor) {
 
 bool mid_IR_left(char lineColor) {
   if ((lineColor == 'B' && (irValues[3] > threshold || irValues[4] > threshold)) || 
-      (lineColor == 'W' && (irValues[3] < threshold || irValues[4] < threshold || irValues[5] < threshold))) {
+      (lineColor == 'W' && (irValues[6] < threshold || irValues[4] < threshold || irValues[5] < threshold   ))) {
     return true;
   }
   return false;
@@ -452,7 +519,7 @@ bool rightJunction(char lineColor) {
 bool leftJunction(char lineColor) {
   if (lineColor == 'B') {
     // For black line: compare if IR values are greater than the threshold
-    if (irValues[1] > threshold && (irValues[5] > threshold || irValues[4] > threshold)) {
+    if (irValues[0] > threshold && (irValues[5] > threshold || irValues[4] > threshold)) {
       return true;
     }
   } else if (lineColor == 'W') {
@@ -557,20 +624,20 @@ void loop() {
     // // line_following_pid_forward(color);
 
     readIRValues(); // Read all IR sensors
-    if (t_junction(color)){
-        displayText("T J");
-        handleRightJunction();
-    } 
-    else if (rightJunction(color)) {
-        displayText("Right J");
-        handleRightJunction();
-    } else if (leftJunction(color)) {
+    if (leftJunction(color)) {
         displayText("Left J");
+        previous_rotate_dir = true;
         handleLeftJunction();
 
+    } else if (rightJunction(color)) {
+        displayText("Right J");
+        previous_rotate_dir=false;
+        handleRightJunction();
     } else if (opposite_line(color)){
+
         displayText("Opposite");
         handleDeadJunction();
+        previous_rotate_dir = !previous_rotate_dir;
     } else if (color_changer(color)){
         displayText("Color change");
         toggleColor(color);
@@ -580,39 +647,93 @@ void loop() {
         handleLineFollowing();
     }
 
+    // if (t_junction(color)){
+    //     displayText("T J");
+    //     handleRightJunction();
+    // } 
+    // else if (rightJunction(color)) {
+    //     displayText("Right J");
+    //     handleRightJunction();
+    // } else if (leftJunction(color)) {
+    //     displayText("Left J");
+    //     handleLeftJunction();
+
+    // } else if (opposite_line(color)){
+    //     displayText("Opposite");
+    //     handleDeadJunction();
+    // } else if (color_changer(color)){
+    //     displayText("Color change");
+    //     toggleColor(color);
+    //     stopMotors();
+    //     delay(2000);
+    // } else {
+    //     handleLineFollowing();
+    // }
+
     // delay(10); // Small delay for stability //30
 }
 
 void handleRightJunction() {
-    // stopMotors();
-    // delay(100);
-    right_rotation();
-    delay(10);
-}
-
-void handleLeftJunction() {
     stopMotors();
     delay(5);
-    runForDurationPID(130);
+    runForDurationPID(170);
+    // moveForward(100);
+    // delay(180);
     stopMotors();
     delay(10);
     readIRValues();
 
-    if (opposite_line(color)) {
-        left_rotation();
+    if (!Black_OR(color) ) {
+        delay(1000);
+        right_rotation();
         delay(10);
-        runForDurationPID(30);
+        // runForDurationPID(30);
     }else {
         handleLineFollowing();
     }
 }
 
+// void handleRightJunction() {
+//     // stopMotors();
+//     // delay(100);
+//     right_rotation();
+//     delay(10);
+// }
+
+// void handleLeftJunction() {
+//     stopMotors();
+//     delay(5);
+//     runForDurationPID(130);
+//     stopMotors();
+//     delay(10);
+//     readIRValues();
+
+//     if (opposite_line(color)) {
+//         left_rotation();
+//         delay(10);
+//         runForDurationPID(30);
+//     }else {
+//         handleLineFollowing();
+//     }
+// }
+
+
+void handleLeftJunction() {
+    stopMotors();
+    delay(5);
+    left_rotation();
+    delay(10);
+    displayText("done");
+    delay(1000);
+
+}
+
 void handleDeadJunction(){
         stopMotors();
-        // delay(20);
+        delay(10);
         runForDurationPID(40);
         stopMotors();
-        // delay(20);
+        delay(10);
         readIRValues();
 
         if (Black_OR(color)){
@@ -636,7 +757,7 @@ void handleDeadJunction(){
             }else{
               stopMotors();
               delay(1000);  
-              left_rotation();         // Rotate 180 degrees
+              dead_end_rotation(previous_rotate_dir);         // Rotate 180 degrees
             }
             
           }
