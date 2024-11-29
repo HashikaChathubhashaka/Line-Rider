@@ -6,6 +6,21 @@
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 
+
+#define BUTTON_1 15  
+#define BUTTON_2 0
+
+
+int main_section = 0; // 0 button fucntions , 1 run
+
+//  For button Functionalities 
+int mode = 0;  // 0-sleep , 1-calibraion , 2-line following
+int mode_on =0; // 0 and 1 
+
+// for section of line following 
+int section =0;
+
+
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
 // Motor control pins
@@ -95,7 +110,7 @@ void line_following_pid_forward(char lineColor) {
     integral += error;                        // Integral term
     integral = constrain(integral, -1000, 1000);  // Integral wind-up protection
     output += kiW * integral;                  
-    output += kdW * (error - lastError);       // Derivative term
+    output += kdW * (error - lastErrorW);       // Derivative term
     lastErrorW = error;
 
     // Calculate motor speeds based on PID output
@@ -123,7 +138,8 @@ void line_following_pid_forward(char lineColor) {
     analogWrite(motorB_pin2, 0);               // Right motor backward off
 
 
-  }else{
+  }
+  else{
 
     readIRValues();
     // Read sensor values
@@ -142,7 +158,7 @@ void line_following_pid_forward(char lineColor) {
     float output = kpB * error;               // Proportional term
     integral += error;                       // Integral term
     output += kiB * integral;                 // Integral term
-    output += kdB * (error - lastError);      // Derivative term
+    output += kdB * (error - lastErrorB);      // Derivative term
     lastErrorB = error;
 
     // Adjust motor speeds based on PID output
@@ -226,8 +242,10 @@ void line_following_pid_forward(char lineColor) {
 void runForDurationPID(unsigned long duration) {
     unsigned long startTime = millis(); // Record the start time
     while (millis() - startTime < duration) {
-        line_following_pid_forward(color);  // Call your line following function
+        Serial.println(millis() - startTime); // Debugging output
+        line_following_pid_forward(color);    // Call your line following function
     }
+
 }
 
 void setup() {
@@ -249,14 +267,8 @@ void setup() {
         pinMode(irPins[i], INPUT);
     }
 
-      display.clearDisplay();     // Clear the display
 
 
-
-      delay(100);
-      displayText("Welcome");
-      delay(2000);
-      display.clearDisplay();
       
 }
 
@@ -662,8 +674,76 @@ bool color_changer(char lineColor) {
 
 void loop() {
 
-    //     displayText("We");
-    // // line_following_pid_forward(color);
+  // For button Functionalities
+  if (main_section==0){
+
+    int buttonState1 = digitalRead(BUTTON_1); // Read the state of the first button
+    int buttonState2 = digitalRead(BUTTON_2); // Read the state of the second button
+
+    if (buttonState1 == LOW) {
+        mode_on = 0;
+        mode = (mode == 2) ? 0 : mode + 1; // Cycle through modes 0, 1, 2
+    }
+
+    if (buttonState2 == LOW) {
+        mode_on = (mode_on == 1) ? 0 : 1; // Cycle through mode_on 0, 1
+    }
+
+    if (mode == 0) {
+        displayText("Sleep mode");
+  
+    } 
+    else if (mode == 1) {
+        if (mode_on == 0) {
+            displayText("Calibration mode");
+        } else if (mode_on == 1) {
+            displayText("Calibrating");
+            //autoCalibrateIR();
+            //code for calibration
+            delay(1000);
+            displayText("Calibrate done");
+            delay(2000);
+            mode_on=0;
+        }
+    } else if (mode == 2) {
+
+        if (mode_on == 0) {
+            displayText("Line following mode");
+
+        } else if (mode_on == 1) {
+            main_section = 1;
+        }
+
+    }
+
+      delay(200); // Delay for readability
+
+}
+
+  // For line following mode
+  else if (main_section == 1) {
+    if (section == 0) {
+      readIRValues(); 
+
+      if (leftJunction(color) || rightJunction(color) )
+      {
+        stopMotors();
+        displayText("Start"); 
+        delay(10);
+        runForDurationPID(300);
+        stopMotors();
+        section=1;
+      }
+
+      else{
+        line_following_pid_forward(color);
+
+      }
+
+    }
+
+    else if(section == 1){
+
 
     readIRValues(); // Read all IR sensors
     if (leftJunction(color)) {
@@ -689,36 +769,23 @@ void loop() {
         handleLineFollowing();
     }
 
-    // if (t_junction(color)){
-    //     displayText("T J");
-    //     handleRightJunction();
-    // } 
-    // else if (rightJunction(color)) {
-    //     displayText("Right J");
-    //     handleRightJunction();
-    // } else if (leftJunction(color)) {
-    //     displayText("Left J");
-    //     handleLeftJunction();
 
-    // } else if (opposite_line(color)){
-    //     displayText("Opposite");
-    //     handleDeadJunction();
-    // } else if (color_changer(color)){
-    //     displayText("Color change");
-    //     toggleColor(color);
-    //     stopMotors();
-    //     delay(2000);
-    // } else {
-    //     handleLineFollowing();
-    // }
+    }
 
-    // delay(10); // Small delay for stability //30
+  }
+
+
+
+
 }
+
+
+
 
 void handleRightJunction() {
     stopMotors();
     delay(5);
-    runForDurationPID(170);
+    runForDurationPID(130);
     // moveForward(100);
     // delay(180);
     stopMotors();

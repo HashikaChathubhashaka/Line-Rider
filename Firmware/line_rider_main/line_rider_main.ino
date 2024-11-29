@@ -110,6 +110,7 @@ void loop() {
             displayWhiteBlack();
             delay(1000);
         }
+        
     } else if (mode == 1) {
         if (mode_on == 0) {
             displayText("Calibration mode");
