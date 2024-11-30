@@ -2,6 +2,10 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <Preferences.h>
+
+
+Preferences preferences;
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
@@ -18,7 +22,7 @@ int mode = 0;  // 0-sleep , 1-calibraion , 2-line following
 int mode_on =0; // 0 and 1 
 
 // for section of line following 
-int section =0;
+int section =1; // 0 for starting , 1 for running
 
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
@@ -33,8 +37,8 @@ const int motorB_pin2 = 17; // Motor B backward
 const int irPins[10] = {39,14,27, 26, 25, 33, 32, 35, 34,36};
 const int irArrayPins[8] = {14,27, 26, 25, 33, 32, 35, 34};
 
-// const int threshold = 200; // IR threshold  for "B"
-const int threshold = 300; // IR threshold for "w"
+const int threshold = 200; // IR threshold  for "B"
+// const int threshold = 300; // IR threshold for "w"
 const int thresholdRight = 200; 
 const int thresholdLeft = 200;
 
@@ -69,6 +73,76 @@ void toggleColor(char &color) {
     color = 'B';  // Change from White ('W') to Black ('B')
   }
 }
+
+
+
+
+// calibration 
+int thresholdsIR[10]; // Threshold values for IR sensors
+
+int manualIR[10] = {200,200,200,200,200,200,200,200,200,200};
+
+
+
+// Save thresholds to NVS
+void saveThresholds() {
+    preferences.begin("thresholds", false); // Open storage in RW mode
+    for (int i = 0; i < 10; i++) {
+        String key = "thresh" + String(i);  // Generate the key
+        preferences.putInt(key.c_str(), thresholdsIR[i]); // Use .c_str() to convert String to const char*
+    }
+    preferences.end(); // Close storage
+}
+
+// Load thresholds from NVS
+void loadThresholds() {
+    preferences.begin("thresholds", true); // Open storage in read-only mode
+    for (int i = 0; i < 10; i++) {
+        String key = "thresh" + String(i);  // Generate the key
+        thresholdsIR[i] = preferences.getInt(key.c_str(), 512); // Default value is 512
+    }
+    preferences.end(); // Close storage
+}
+
+// calibration function for IR sensors
+void autoCalibrateIR() { 
+    int minValues[10]; // Minimum values for each IR sensor
+    int maxValues[10]; // Maximum values for each IR sensor
+
+    // Initialize min and max values
+    for (int i = 0; i < 10; i++) {
+        minValues[i] = 1023; // Maximum ADC value
+        maxValues[i] = 0;    // Minimum ADC value
+    }
+
+    // Rotate the robot left and right
+    for (int t = 0; t < 900; t++) { // Run for 200 cycles (~adjust as needed)
+        readIRValues();
+        for (int i = 0; i < 10; i++) {
+            int sensorValue = irValues[i];
+            if (sensorValue < minValues[i]) minValues[i] = sensorValue;
+            if (sensorValue > maxValues[i]) maxValues[i] = sensorValue;
+        }
+
+        // // Move robot left and right alternately
+        if (t < 450) {
+            turnLeft(130); // Rotate left at speed 80
+        } else {
+            turnRight(130); // Rotate right at speed 80
+        }
+        delay(10); // Delay for smooth movement and reading
+    }
+
+    stopMotors(); // Stop motors after calibration
+    // Calculate thresholds for each sensor
+    for (int i = 0; i < 10; i++) {
+        thresholdsIR[i] = (minValues[i] + maxValues[i]) / 2; // Midpoint as threshold
+    }
+    saveThresholds(); // Save thresholds to NVS
+}
+
+
+
 
 
 
@@ -266,6 +340,8 @@ void setup() {
     for (int i = 0; i < 10; i++) {
         pinMode(irPins[i], INPUT);
     }
+
+    loadThresholds();
 
 
 
@@ -523,22 +599,22 @@ void  readIRValues() {
 }
 
 bool mid_IR_rightx() {                //use for 'B' left rotate problem
-  if (irValues[4] > threshold) {
+  if (irValues[4] > thresholdsIR[4]) {
     return true;
   }
     return false;
 }
 
 bool mid_IR_leftx() {
-  if (irValues[3] > threshold ) {
+  if (irValues[3] > thresholdsIR[3] ) {
     return true;
   }
     return false;
 }
 
 bool mid_IR_right(char lineColor) {
-  if ((lineColor == 'B' && (irValues[4] < threshold || irValues[5] > threshold || irValues[6] > threshold)) || 
-      (lineColor == 'W' && (irValues[4] < threshold || irValues[5] < threshold || irValues[3] < threshold  ))) {
+  if ((lineColor == 'B' && (irValues[4] < thresholdsIR[4] || irValues[5] > thresholdsIR[5] || irValues[6] > thresholdsIR[6])) || 
+      (lineColor == 'W' && (irValues[4] < thresholdsIR[4] || irValues[5] < thresholdsIR[5] || irValues[3] < thresholdsIR[3]  ))) {
     return true;
   }
   return false;
@@ -546,8 +622,8 @@ bool mid_IR_right(char lineColor) {
 
 
 bool mid_IR_left(char lineColor) {
-  if ((lineColor == 'B' && (irValues[3] > threshold || irValues[4] > threshold || irValues[5] < threshold )) || 
-      (lineColor == 'W' && (irValues[6] < threshold || irValues[4] < threshold || irValues[5] < threshold   ))) {
+  if ((lineColor == 'B' && (irValues[3] > thresholdsIR[3] || irValues[4] > thresholdsIR[4] || irValues[5] < thresholdsIR[5] )) || 
+      (lineColor == 'W' && (irValues[6] < thresholdsIR[6] || irValues[4] < thresholdsIR[4] || irValues[5] < thresholdsIR[5]  ))) {
     return true;
   }
   return false;
@@ -556,14 +632,14 @@ bool mid_IR_left(char lineColor) {
 bool rightJunction(char lineColor) {
   if (lineColor == 'B') {
     // For black line: IR values should be greater than the threshold
-    if ((irValues[9] > threshold || irValues[8] > threshold) &&
-        (irValues[5] > threshold || irValues[4] > threshold)) {
+    if ((irValues[9] > thresholdsIR[9] || irValues[8] > thresholdsIR[8]) &&
+        (irValues[5] > thresholdsIR[5] || irValues[4] > thresholdsIR[4])) {
       return true;
     }
   } else if (lineColor == 'W') {
     // For white line: IR values should be less than the threshold
     if ((irValues[9] < thresholdRight) &&
-        (irValues[4] < threshold || irValues[5] > threshold)) {
+        (irValues[4] < thresholdsIR[4] || irValues[5] > thresholdsIR[5])) {
       return true;
     }
   }
@@ -573,12 +649,12 @@ bool rightJunction(char lineColor) {
 bool leftJunction(char lineColor) {
   if (lineColor == 'B') {
     // For black line: compare if IR values are greater than the threshold
-    if (irValues[0] > threshold && (irValues[5] > threshold || irValues[4] > threshold)) {
+    if (irValues[0] > thresholdsIR[0] && (irValues[5] > thresholdsIR[5] || irValues[4] > thresholdsIR[4])) {
       return true;
     }
   } else if (lineColor == 'W') {
     // For white line: compare if IR values are less than the threshold
-    if (irValues[0] < thresholdLeft && (irValues[5] < threshold || irValues[4] < threshold)) {
+    if (irValues[0] < thresholdLeft && (irValues[5] < thresholdsIR[5] || irValues[4] < thresholdsIR[4])) {
       return true;
     }
   }
@@ -594,17 +670,17 @@ bool t_junction(char lineColor) {
     //   return true;
     // }
 
-    if ((irValues[0] > threshold || irValues[1] > threshold) &&
-        (irValues[9] > threshold || irValues[8] > threshold ) &&
-        (irValues[5] > threshold || irValues[4] > threshold)) {
+    if ((irValues[0] > thresholdsIR[0] || irValues[1] > thresholdsIR[1]) &&
+        (irValues[9] > thresholdsIR[9] || irValues[8] > thresholdsIR[8] ) &&
+        (irValues[5] > thresholdsIR[5] || irValues[4] > thresholdsIR[4])) {
       return true;
     }
 
   } else if (lineColor == 'W') {
     // For white line: IR values should be less than the threshold
-    if ((irValues[0] < thresholdLeft || irValues[1] < threshold) &&
-        (irValues[9] < thresholdRight || irValues[8] < thresholdRight) &&
-        (irValues[5] < threshold || irValues[4] < threshold)) {
+    if ((irValues[0] < thresholdsIR[0] || irValues[1] < thresholdsIR[1]) &&
+        (irValues[9] < thresholdsIR[9] || irValues[8] < thresholdsIR[9]) &&
+        (irValues[5] < thresholdsIR[5] || irValues[4] < thresholdsIR[4])) {
       return true;
     }
   }
@@ -614,15 +690,15 @@ bool t_junction(char lineColor) {
 
 bool opposite_line(char lineColor) {
   if (lineColor == 'B') {
-    if (irValues[0] < threshold && irValues[1] < threshold && irValues[2] < threshold && 
-        irValues[3] < threshold && irValues[4] < threshold && irValues[5] < threshold && 
-        irValues[6] < threshold && irValues[7] < threshold   && irValues[8] < threshold && irValues[9] < threshold  ) {
+    if (irValues[0] < thresholdsIR[0] && irValues[1] < thresholdsIR[1] && irValues[2] < thresholdsIR[2] && 
+        irValues[3] < thresholdsIR[3] && irValues[4] < thresholdsIR[4] && irValues[5] < thresholdsIR[5] && 
+        irValues[6] < thresholdsIR[6] && irValues[7] < thresholdsIR[7]   && irValues[8] < thresholdsIR[8] && irValues[9] < thresholdsIR[9]  ) {
       return true;
     }
   } else if (lineColor == 'W') {
-    if (irValues[0] > threshold && irValues[1] > threshold && irValues[2] > threshold && 
-        irValues[3] > threshold && irValues[4] > threshold && irValues[5] > threshold && 
-        irValues[6] > threshold && irValues[7] > threshold) {
+    if (irValues[0] > thresholdsIR[0] && irValues[1] > thresholdsIR[1] && irValues[2] > thresholdsIR[2] && 
+        irValues[3] > thresholdsIR[3] && irValues[4] > thresholdsIR[4] && irValues[5] > thresholdsIR[5] && 
+        irValues[6] > thresholdsIR[6] && irValues[7] > thresholdsIR[7]) {
       return true;
     }
   }
@@ -632,16 +708,16 @@ bool opposite_line(char lineColor) {
 bool Black_OR(char lineColor) {
   if (lineColor == 'B') {
     // For black line: IR values should be greater than the threshold
-    if (irValues[0] > threshold || irValues[1] > threshold || irValues[2] > threshold || 
-        irValues[3] > threshold || irValues[4] > threshold || irValues[5] > threshold || 
-        irValues[6] > threshold || irValues[7] > threshold || irValues[8] > threshold || irValues[9] > threshold ) {
+    if (irValues[0] > thresholdsIR[0] || irValues[1] > thresholdsIR[1] || irValues[2] > thresholdsIR[2] || 
+        irValues[3] > thresholdsIR[3] || irValues[4] > thresholdsIR[4] || irValues[5] > thresholdsIR[5] || 
+        irValues[6] > thresholdsIR[6] || irValues[7] > thresholdsIR[7] || irValues[8] > thresholdsIR[8] || irValues[9] > thresholdsIR[9] ) {
       return true;
     }
   } else if (lineColor == 'W') {
     // For white line: IR values should be less than the threshold
-    if (irValues[0] < threshold || irValues[1] < threshold || irValues[2] < threshold || 
-        irValues[3] < threshold || irValues[4] < threshold || irValues[5] < threshold || 
-        irValues[6] < threshold || irValues[7] < threshold) {
+    if (irValues[0] < thresholdsIR[0] || irValues[1] < thresholdsIR[1] || irValues[2] < thresholdsIR[2] || 
+        irValues[3] < thresholdsIR[3] || irValues[4] < thresholdsIR[4] || irValues[5] < thresholdsIR[5] || 
+        irValues[6] < thresholdsIR[6] || irValues[7] < thresholdsIR[7]) {
       return true;
     }
   }
@@ -652,14 +728,14 @@ bool Black_OR(char lineColor) {
 bool color_changer(char lineColor) {
   if (lineColor == 'B') {
     // For black line: IR values should be greater or less than the threshold accordingly
-    if (irValues[0] > thresholdRight && irValues[9] > thresholdLeft &&
-        (irValues[3] < threshold || irValues[4] < threshold || irValues[5] < threshold || irValues[6] < threshold)) {
+    if (irValues[0] > thresholdsIR[0] && irValues[9] > thresholdsIR[9] &&
+        (irValues[3] < thresholdsIR[3] || irValues[4] < thresholdsIR[4] || irValues[5] < thresholdsIR[5] || irValues[6] < thresholdsIR[6])) {
       return true;
     }
   } else if (lineColor == 'W') {
     // For white line: Reverse the comparisons
-    if (irValues[0] < thresholdRight && irValues[9] < thresholdLeft &&
-        (irValues[3] > threshold || irValues[4] > threshold  || irValues[5] > threshold || irValues[6] > threshold)) {
+    if (irValues[0] < thresholdsIR[0] && irValues[9] < thresholdsIR[9] &&
+        (irValues[3] > thresholdsIR[3] || irValues[4] > thresholdsIR[4]  || irValues[5] > thresholdsIR[5] || irValues[6] > thresholdsIR[6])) {
       return true;
     }
   }
@@ -691,6 +767,24 @@ void loop() {
 
     if (mode == 0) {
         displayText("Sleep mode");
+
+        //serial monitor shoe threshold values
+        for (int i = 0; i < 10; i++) {
+            Serial.print(thresholdsIR[i]);
+            Serial.print(" ");
+        }
+            Serial.println("");
+
+        
+        if (mode_on == 1) {
+          displayText("changed threshold");
+          delay(1000);
+          for (int i = 0; i < 10; i++) {
+            thresholdsIR[i] = manualIR[i];
+          }
+          mode_on=0;
+        }
+
   
     } 
     else if (mode == 1) {
@@ -698,9 +792,10 @@ void loop() {
             displayText("Calibration mode");
         } else if (mode_on == 1) {
             displayText("Calibrating");
-            //autoCalibrateIR();
-            //code for calibration
             delay(1000);
+            autoCalibrateIR();
+            //code for calibration
+
             displayText("Calibrate done");
             delay(2000);
             mode_on=0;
@@ -746,7 +841,17 @@ void loop() {
 
 
     readIRValues(); // Read all IR sensors
-    if (leftJunction(color)) {
+
+    if (color_changer(color)){
+        displayText("Color change");
+        toggleColor(color);
+        stopMotors();
+        delay(2000);
+
+    }
+
+
+    else if (leftJunction(color)) {
         displayText("Left J");
         previous_rotate_dir = true;
         handleLeftJunction();
@@ -760,12 +865,17 @@ void loop() {
         displayText("Opposite");
         handleDeadJunction();
         previous_rotate_dir = !previous_rotate_dir;
-    } else if (color_changer(color)){
-        displayText("Color change");
-        toggleColor(color);
-        stopMotors();
-        delay(2000);
-    } else {
+
+
+    } 
+    //else if (color_changer(color)){
+    //     displayText("Color change");
+    //     toggleColor(color);
+    //     stopMotors();
+    //     delay(2000);
+
+    // } 
+    else {
         handleLineFollowing();
     }
 
