@@ -164,7 +164,7 @@ void line_following_pid_forward(char lineColor) {
     readIRValues();  // Function to read IR sensor values into irValues array
 
     // Define weights for each sensor, assuming 7 sensors are used
-    int weights[10] = {5.5 ,5 , 4, 2.5, 0.5, -0.5, -2.5, -4, -5 ,-5.5};  // Adjust as needed
+    int weights[10] = {6 ,5 , 4, 2.5, 0.5, -0.5, -2.5, -4, -5 ,-6};  // Adjust as needed
 
     // Calculate the error value using weighted sensor readings
     float error = 0.0;
