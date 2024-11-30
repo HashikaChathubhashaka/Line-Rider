@@ -48,7 +48,7 @@ const float kiB = 0.0; // Integral gain
 const float kdB = 2.0; // Derivative gain
 
 // W" PID constants
-const float kpW = 8.0; // Proportional gain
+const float kpW = 4.0; // Proportional gain - 8 
 const float kiW = 0.0; // Integral gain
 const float kdW = 0.5; // Derivative gain
 
@@ -58,8 +58,8 @@ float lastErrorW = 0.0;
 float lastErrorB = 0.0;
 
 // Motor speed settings
-const int motorSpeed = 120; // Base speed 120
-const int maxSpeed = 255;   // Maximum speed 255
+const int motorSpeed = 80; // Base speed 120
+const int maxSpeed = 160;   // Maximum speed 255
 const int minSpeed = 30;     // Minimum speed 30
 
 int irValues[10];
@@ -164,7 +164,7 @@ void line_following_pid_forward(char lineColor) {
     readIRValues();  // Function to read IR sensor values into irValues array
 
     // Define weights for each sensor, assuming 7 sensors are used
-    int weights[10] = {7 ,5 , 4, 2.5, 0.5, -0.5, -2.5, -4, -5 ,-7};  // Adjust as needed
+    int weights[10] = {5.5 ,5 , 4, 2.5, 0.5, -0.5, -2.5, -4, -5 ,-5.5};  // Adjust as needed
 
     // Calculate the error value using weighted sensor readings
     float error = 0.0;
@@ -464,7 +464,7 @@ void right_rotation(){          //two weel
   }
   while(mid_IR_right(color)==false);
   stopMotors();
-  delay(1000);
+  delay(50);
 
 
 }
@@ -517,7 +517,7 @@ void left_rotation(){
   while(mid_IR_left(color)==false);
   // while(mid_IR_leftx()==false && mid_IR_rightx()==false);
   stopMotors();
-  delay(1000);
+  delay(50);
 
 
 
@@ -542,7 +542,7 @@ void dead_end_rotation(bool dir){
     while(mid_IR_left(color)==false);
     // while(mid_IR_leftx()==false && mid_IR_rightx()==false);
     stopMotors();
-    delay(1000);
+    delay(100);
 
   }
 
@@ -942,8 +942,6 @@ void handleLeftJunction() {
     delay(5);
     left_rotation();
     delay(10);
-    displayText("done");
-    delay(1000);
 
 }
 
