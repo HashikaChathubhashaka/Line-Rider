@@ -15,7 +15,7 @@ Preferences preferences;
 #define BUTTON_2 0
 
 
-int main_section = 0; // 0 button fucntions , 1 run
+int main_section = 1; // 0 button fucntions , 1 run
 
 //  For button Functionalities 
 int mode = 0;  // 0-sleep , 1-calibraion , 2-line following
@@ -24,6 +24,7 @@ int mode_on =0; // 0 and 1
 // for section of line following 
 int section =1; // 0 for starting , 1 for running
 
+char color = 'W';
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
@@ -58,13 +59,13 @@ float lastErrorW = 0.0;
 float lastErrorB = 0.0;
 
 // Motor speed settings
-const int motorSpeed = 80; // Base speed 120
-const int maxSpeed = 160;   // Maximum speed 255
+const int motorSpeed = 100; // Base speed 120
+const int maxSpeed = 200;   // Maximum speed 255
 const int minSpeed = 30;     // Minimum speed 30
 
 int irValues[10];
 
-char color = 'W';
+
 
 void toggleColor(char &color) {
   if (color == 'B') {
@@ -78,7 +79,7 @@ void toggleColor(char &color) {
 
 
 // calibration 
-int thresholdsIR[10]; // Threshold values for IR sensors
+int thresholdsIR[10] = {200,200,200,200,200,200,200,200,200,200}; // Threshold values for IR sensors
 
 int manualIR[10] = {200,200,200,200,200,200,200,200,200,200};
 
@@ -164,7 +165,7 @@ void line_following_pid_forward(char lineColor) {
     readIRValues();  // Function to read IR sensor values into irValues array
 
     // Define weights for each sensor, assuming 7 sensors are used
-    int weights[10] = {6 ,5 , 4, 2.5, 0.5, -0.5, -2.5, -4, -5 ,-6};  // Adjust as needed
+    int weights[10] = {0 ,5 , 4, 2.5, 1, -1, -2.5, -4, -5 ,0};  // Adjust as needed
 
     // Calculate the error value using weighted sensor readings
     float error = 0.0;
@@ -341,7 +342,12 @@ void setup() {
         pinMode(irPins[i], INPUT);
     }
 
-    loadThresholds();
+    // loadThresholds();
+      delay(1000);
+      moveForward(100);
+      delay(400);
+      stopMotors();
+      delay(1000);
 
 
 
@@ -638,7 +644,7 @@ bool rightJunction(char lineColor) {
     }
   } else if (lineColor == 'W') {
     // For white line: IR values should be less than the threshold
-    if ((irValues[9] < thresholdRight) &&
+    if ((irValues[9] < thresholdsIR[9]) &&
         (irValues[4] < thresholdsIR[4] || irValues[5] > thresholdsIR[5])) {
       return true;
     }
@@ -649,12 +655,12 @@ bool rightJunction(char lineColor) {
 bool leftJunction(char lineColor) {
   if (lineColor == 'B') {
     // For black line: compare if IR values are greater than the threshold
-    if (irValues[0] > thresholdsIR[0] && (irValues[5] > thresholdsIR[5] || irValues[4] > thresholdsIR[4])) {
+    if (irValues[0] > thresholdLeft && irValues[1] > thresholdsIR[1]   && (irValues[5] > thresholdsIR[5] || irValues[4] > thresholdsIR[4])) {
       return true;
     }
   } else if (lineColor == 'W') {
     // For white line: compare if IR values are less than the threshold
-    if (irValues[0] < thresholdLeft && (irValues[5] < thresholdsIR[5] || irValues[4] < thresholdsIR[4])) {
+    if (irValues[0] < thresholdLeft  && irValues[1] < thresholdsIR[1]  && (irValues[5] < thresholdsIR[5] || irValues[4] < thresholdsIR[4])) {
       return true;
     }
   }
@@ -670,7 +676,7 @@ bool t_junction(char lineColor) {
     //   return true;
     // }
 
-    if ((irValues[0] > thresholdsIR[0] || irValues[1] > thresholdsIR[1]) &&
+    if ((irValues[0] > thresholdLeft || irValues[1] > thresholdsIR[1]) &&
         (irValues[9] > thresholdsIR[9] || irValues[8] > thresholdsIR[8] ) &&
         (irValues[5] > thresholdsIR[5] || irValues[4] > thresholdsIR[4])) {
       return true;
@@ -678,7 +684,7 @@ bool t_junction(char lineColor) {
 
   } else if (lineColor == 'W') {
     // For white line: IR values should be less than the threshold
-    if ((irValues[0] < thresholdsIR[0] || irValues[1] < thresholdsIR[1]) &&
+    if ((irValues[0] < thresholdLeft || irValues[1] < thresholdsIR[1]) &&
         (irValues[9] < thresholdsIR[9] || irValues[8] < thresholdsIR[9]) &&
         (irValues[5] < thresholdsIR[5] || irValues[4] < thresholdsIR[4])) {
       return true;
@@ -690,13 +696,13 @@ bool t_junction(char lineColor) {
 
 bool opposite_line(char lineColor) {
   if (lineColor == 'B') {
-    if (irValues[0] < thresholdsIR[0] && irValues[1] < thresholdsIR[1] && irValues[2] < thresholdsIR[2] && 
+    if (irValues[0] < thresholdLeft && irValues[1] < thresholdsIR[1] && irValues[2] < thresholdsIR[2] && 
         irValues[3] < thresholdsIR[3] && irValues[4] < thresholdsIR[4] && irValues[5] < thresholdsIR[5] && 
         irValues[6] < thresholdsIR[6] && irValues[7] < thresholdsIR[7]   && irValues[8] < thresholdsIR[8] && irValues[9] < thresholdsIR[9]  ) {
       return true;
     }
   } else if (lineColor == 'W') {
-    if (irValues[0] > thresholdsIR[0] && irValues[1] > thresholdsIR[1] && irValues[2] > thresholdsIR[2] && 
+    if (irValues[0] >thresholdLeft && irValues[1] > thresholdsIR[1] && irValues[2] > thresholdsIR[2] && 
         irValues[3] > thresholdsIR[3] && irValues[4] > thresholdsIR[4] && irValues[5] > thresholdsIR[5] && 
         irValues[6] > thresholdsIR[6] && irValues[7] > thresholdsIR[7]) {
       return true;
@@ -708,14 +714,14 @@ bool opposite_line(char lineColor) {
 bool Black_OR(char lineColor) {
   if (lineColor == 'B') {
     // For black line: IR values should be greater than the threshold
-    if (irValues[0] > thresholdsIR[0] || irValues[1] > thresholdsIR[1] || irValues[2] > thresholdsIR[2] || 
+    if (irValues[0] > thresholdLeft || irValues[1] > thresholdsIR[1] || irValues[2] > thresholdsIR[2] || 
         irValues[3] > thresholdsIR[3] || irValues[4] > thresholdsIR[4] || irValues[5] > thresholdsIR[5] || 
         irValues[6] > thresholdsIR[6] || irValues[7] > thresholdsIR[7] || irValues[8] > thresholdsIR[8] || irValues[9] > thresholdsIR[9] ) {
       return true;
     }
   } else if (lineColor == 'W') {
     // For white line: IR values should be less than the threshold
-    if (irValues[0] < thresholdsIR[0] || irValues[1] < thresholdsIR[1] || irValues[2] < thresholdsIR[2] || 
+    if (irValues[0] < thresholdLeft || irValues[1] < thresholdsIR[1] || irValues[2] < thresholdsIR[2] || 
         irValues[3] < thresholdsIR[3] || irValues[4] < thresholdsIR[4] || irValues[5] < thresholdsIR[5] || 
         irValues[6] < thresholdsIR[6] || irValues[7] < thresholdsIR[7]) {
       return true;
@@ -728,13 +734,13 @@ bool Black_OR(char lineColor) {
 bool color_changer(char lineColor) {
   if (lineColor == 'B') {
     // For black line: IR values should be greater or less than the threshold accordingly
-    if (irValues[0] > thresholdsIR[0] && irValues[9] > thresholdsIR[9] &&
+    if (irValues[0] > thresholdLeft && irValues[9] > thresholdsIR[9] &&
         (irValues[3] < thresholdsIR[3] || irValues[4] < thresholdsIR[4] || irValues[5] < thresholdsIR[5] || irValues[6] < thresholdsIR[6])) {
       return true;
     }
   } else if (lineColor == 'W') {
     // For white line: Reverse the comparisons
-    if (irValues[0] < thresholdsIR[0] && irValues[9] < thresholdsIR[9] &&
+    if (irValues[0] < thresholdLeft && irValues[9] < thresholdsIR[9] &&
         (irValues[3] > thresholdsIR[3] || irValues[4] > thresholdsIR[4]  || irValues[5] > thresholdsIR[5] || irValues[6] > thresholdsIR[6])) {
       return true;
     }
@@ -766,7 +772,7 @@ void loop() {
     }
 
     if (mode == 0) {
-        displayText("Sleep mode");
+        displayText("threshold mode");
 
         //serial monitor shoe threshold values
         for (int i = 0; i < 10; i++) {
@@ -779,9 +785,7 @@ void loop() {
         if (mode_on == 1) {
           displayText("changed threshold");
           delay(1000);
-          for (int i = 0; i < 10; i++) {
-            thresholdsIR[i] = manualIR[i];
-          }
+          loadThresholds();
           mode_on=0;
         }
 
@@ -818,26 +822,42 @@ void loop() {
   // For line following mode
   else if (main_section == 1) {
     if (section == 0) {
-      readIRValues(); 
+      //readIRValues(); 
 
-      if (leftJunction(color) || rightJunction(color) )
-      {
-        stopMotors();
-        displayText("Start"); 
-        delay(10);
-        runForDurationPID(300);
-        stopMotors();
-        section=1;
-      }
+      moveForward(100);
+      delay(400);
+      stopMotors();
+      delay(1000);
+      section=1;
 
-      else{
-        line_following_pid_forward(color);
+      // if (leftJunction(color) || rightJunction(color) )
+      // {
+      //   stopMotors();
+      //   displayText("Start"); 
+      //   delay(10);
+      //   runForDurationPID(400);
+      //   stopMotors();
 
-      }
+
+      //   section=1;
+      // }
+
+      // else{
+      //   line_following_pid_forward(color);
+
+      // }
 
     }
 
     else if(section == 1){
+
+
+    // int buttonState1 = digitalRead(BUTTON_1); // Read the state of the first button
+
+    // if (buttonState1 == LOW) {
+    //     stopMotors();
+    //     main_section = 0;
+    // }
 
 
     readIRValues(); // Read all IR sensors
@@ -852,6 +872,7 @@ void loop() {
 
 
     else if (leftJunction(color)) {
+
         displayText("Left J");
         previous_rotate_dir = true;
         handleLeftJunction();
@@ -894,7 +915,7 @@ void loop() {
 
 void handleRightJunction() {
     stopMotors();
-    delay(5);
+    delay(10);
     runForDurationPID(130);
     // moveForward(100);
     // delay(180);
@@ -903,9 +924,9 @@ void handleRightJunction() {
     readIRValues();
 
     if (!Black_OR(color) ) {
-        delay(1000);
+        // delay(1000);
         right_rotation();
-        delay(10);
+        // delay(10);
         // runForDurationPID(30);
     }else {
         handleLineFollowing();
